@@ -10,6 +10,7 @@ Usage: showterm <command to run>
 showterm will record the exact output of your session, and upload it to the
 internet where it can be replayed by anyone to whom you give the URL.
  EOF
+ exit
 end
 
 sf, tf = Showterm.record! *ARGV

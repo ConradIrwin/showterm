@@ -28,12 +28,13 @@ module Showterm
       raise "Could not run 'script', please check that it's installed"
     end
 
-    puts 'Recorded'
+    puts 'showterm recording finished'
 
     [scriptfile.path, timingfile.path]
   end
 
   def upload!(scriptfile, timingfile, cols=80)
+    puts 'uploading, please wait.'
     request = Net::HTTP::Post.new("/scripts")
     request.set_form_data(:scriptfile => File.read(scriptfile),
                           :timingfile => File.read(timingfile),
@@ -56,6 +57,6 @@ module Showterm
       http.request request
     end
   rescue Timeout::Error
-    raise "Could not connect to https://api.github.com/"
+    raise "Could not connect to https://showterm.herokuapp.com/"
   end
 end

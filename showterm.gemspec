@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "showterm"
-  s.version = "0.1.pre.1"
+  s.version = "0.1"
   s.platform = Gem::Platform::RUBY
   s.author = "Conrad Irwin"
   s.email = "conrad.irwin@gmail.com"
