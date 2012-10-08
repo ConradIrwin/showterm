@@ -10,8 +10,10 @@ module Showterm
     scriptfile = Tempfile.new('showterm.script')
     timingfile = Tempfile.new('showterm.time')
 
-    scriptfile.close(false)
-    timingfile.close(false)
+    sf, tf = [scriptfile, timingfile].map(&:path)
+
+    scriptfile.close(true)
+    timingfile.close(true)
 
     args = []
     if cmd.size > 0
@@ -19,8 +21,8 @@ module Showterm
     end
 
     args << '-q'
-    args << '-t' + timingfile.path
-    args << scriptfile.path
+    args << '-t' + tf
+    args << sf
 
     puts "showterm is recording, quit when you're done."
 
@@ -30,7 +32,7 @@ module Showterm
 
     puts 'showterm recording finished'
 
-    [scriptfile.path, timingfile.path]
+    [sf, tf]
   end
 
   def upload!(scriptfile, timingfile, cols=80)
