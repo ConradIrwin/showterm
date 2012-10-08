@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require 'readline'
+require File.join(__FILE__, '../../lib/showterm')
+
+if ARGV.include?('-h') || ARGV.include?('--help')
+  puts <<-EOF
+Usage: showterm <command to run>
+
+showterm will record the exact output of your session, and upload it to the
+internet where it can be replayed by anyone to whom you give the URL.
+ EOF
+end
+
+sf, tf = Showterm.record! *ARGV
+begin
+  Showterm.upload! sf, tf, ENV['COLUMNS'] || 80
+  File.unlink sf
+  File.unlink tf
+rescue => e
+  puts [e] + e.backtrace
+  puts "DON'T PANIC"
+  puts "your script file is: #{sf} and your timing file is: #{tf}"
+  puts "to try uploading again:"
+  puts "ruby -rshowterm -e'Showterm.upload! #{sf.inspect}, #{tf.inspect}'"
+end
