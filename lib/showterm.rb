@@ -14,13 +14,13 @@ module Showterm
   # @return [scriptfile, timingfile]  the two halves of a termshow
   def record!(*cmd)
     if use_script?
-      puts 'showterm recording with script, quit when done'
+      puts 'showterm recording, exit when done'
       ret = record_with_script(*cmd)
     else
-      puts 'showterm recording with ttyrec, quit when done'
+      puts 'showterm recording, exit when done'
       ret = record_with_ttyrec(*cmd)
     end
-    puts 'showterm recording finished'
+    puts 'showterm recording finished, uploading...'
 
     ret
   end
@@ -39,7 +39,6 @@ module Showterm
   # @param [String] timingfile  The timings
   # @param [Integer] cols  The width of the terminal
   def upload!(scriptfile, timingfile, cols=terminal_width)
-    puts 'uploading, please wait.'
     request = Net::HTTP::Post.new("/scripts")
     request.set_form_data(:scriptfile => scriptfile,
                           :timingfile => timingfile,
