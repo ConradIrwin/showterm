@@ -15,7 +15,6 @@ TODO
 ====
 
 * Allow embedders to chose colourschemes (at least light vs. dark background).
-* Fix problems with non-80 column terminals
 * Fix problems with vim which sometimes goes out-of-bounds for term.js
 
 Meta-fu
@@ -28,3 +27,5 @@ Credit
 ======
 
 This would not have been doable without the excellent terminal emulator I borrowed from Christopher Jeffrey's incredible [tty.js](https://github.com/chjj/tty.js).
+
+For terminal recording on a mac, this gem bundles Satoru Takabayashi's awesome [`ttyrec`](http://0xcc.net/ttyrec) program.
