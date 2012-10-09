@@ -17,9 +17,18 @@ sf, tf = Showterm.record! *ARGV
 begin
   Showterm.upload! sf, tf
 rescue => e
+  File.open("/tmp/showtime.#$$.script", 'w') do |f|
+    f.write(sf)
+  end
+
+  File.open("/tmp/showtime.#$$.times", 'w') do |f|
+    f.write(sf)
+  end
   puts [e] + e.backtrace
+  puts "-" * 80
   puts "DON'T PANIC"
-  puts "your script file is: #{sf} and your timing file is: #{tf}"
-  puts "to try uploading again:"
-  puts "ruby -rshowterm -e'Showterm.upload! #{sf.inspect}, #{tf.inspect}'"
+  puts %(your work is safe in "/tmp/showtime.#$$.script" and "/tmp/showtime.#$$.times")
+  puts "To try uploading manually use:"
+
+  puts %(ruby -rshowterm -e'Showterm.upload! File.read("/tmp/showtime.#$$.script"), File.read("/tmp/showtime.#$$.times")')
 end
