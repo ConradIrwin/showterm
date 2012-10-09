@@ -15,7 +15,7 @@ module Showterm
     scriptfile = Tempfile.new('showterm.script')
     scriptfile.close(false)
 
-    args = [File.join(File.dirname(__FILE__), '../ext/ttyrec')]
+    args = [File.join(File.dirname(File.dirname(__FILE__)), 'ext/ttyrec')]
     if cmd.size > 0
       args << '-e' + cmd.join(" ")
     end

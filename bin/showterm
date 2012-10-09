@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'readline'
-require File.join(__FILE__, '../../lib/showterm')
+require File.join(File.dirname(File.dirname(__FILE__)), 'lib/showterm')
 
 if ARGV.include?('-h') || ARGV.include?('--help')
   puts <<-EOF
