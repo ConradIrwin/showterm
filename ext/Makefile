@@ -29,3 +29,6 @@ dist:
 	cp $(DIST) ttyrec-$(VERSION)
 	tar zcf ttyrec-$(VERSION).tar.gz  ttyrec-$(VERSION)
 	rm -rf ttyrec-$(VERSION)
+
+install:
+	:
