@@ -15,9 +15,7 @@ end
 
 sf, tf = Showterm.record! *ARGV
 begin
-  Showterm.upload! sf, tf, ENV['COLUMNS'] || 80
-  File.unlink sf
-  File.unlink tf
+  Showterm.upload! sf, tf
 rescue => e
   puts [e] + e.backtrace
   puts "DON'T PANIC"
