@@ -17,7 +17,7 @@ module Showterm
       puts 'showterm recording with script, quit when done'
       ret = record_with_script(*cmd)
     else
-      puts 'showterm recording with , quit when done'
+      puts 'showterm recording with ttyrec, quit when done'
       ret = record_with_ttyrec(*cmd)
     end
     puts 'showterm recording finished'
