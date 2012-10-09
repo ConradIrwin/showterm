@@ -76,9 +76,9 @@ module Showterm
   #
   # @return [Boolean] whether the script command looks like it's working.
   def use_script?
-    scriptfile, timingfile = record_with_script('echo', 'foo')
-
-    scriptfile =~ /foo/ && timingfile =~ /^[0-9]/
+    scriptfile, timingfile = [temp_file, temp_file]
+    `#{script_command(scriptfile, timingfile, ['echo', 'foo'])}`
+    scriptfile.open.read =~ /foo/ && timingfile.open.read =~ /^[0-9]/
   end
 
   # Record using the modern version of 'script'
@@ -87,16 +87,18 @@ module Showterm
   # @return [scriptfile, timingfile]
   def record_with_script(*cmd)
     scriptfile, timingfile = [temp_file, temp_file]
+    system script_command(scriptfile, timingfile, cmd)
+    [scriptfile.open.read, timingfile.open.read]
+  end
 
+  def script_command(scriptfile, timingfile, cmd)
     args = ['script']
     args << '-c' + cmd.join(" ") if cmd.size > 0
     args << '-q'
     args << '-t'
     args << scriptfile.path
 
-    system("#{args.map{ |x| Shellwords.escape(x) }.join(" ")} 2>#{Shellwords.escape(timingfile.path)}")
-
-    [scriptfile.open.read, timingfile.open.read]
+    "#{args.map{ |x| Shellwords.escape(x) }.join(" ")} 2>#{Shellwords.escape(timingfile.path)}"
   end
 
 
