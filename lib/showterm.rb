@@ -1,4 +1,5 @@
 require 'tempfile'
+require 'shellwords'
 require 'net/https'
 
 module Showterm
@@ -12,22 +13,16 @@ module Showterm
   # @param [*String] cmd
   # @return [scriptfile, timingfile]  the two halves of a termshow
   def record!(*cmd)
-    scriptfile = Tempfile.new('showterm.script')
-    scriptfile.close(false)
-
-    args = [File.join(File.dirname(File.dirname(__FILE__)), 'ext/ttyrec')]
-    if cmd.size > 0
-      args << '-e' + cmd.join(" ")
+    if use_script?
+      puts 'showterm recording with script, quit when done'
+      ret = record_with_script(*cmd)
+    else
+      puts 'showterm recording with , quit when done'
+      ret = record_with_ttyrec(*cmd)
     end
-    args << scriptfile.path
-
-    puts "showterm is recording, quit when you're done."
-    system(*args) or  raise "showterm recording failed"
     puts 'showterm recording finished'
 
-    ret = scriptfile.open.read
-    scriptfile.close(true)
-    convert(ret)
+    ret
   end
 
   # Get the current width of the terminal
@@ -60,6 +55,69 @@ module Showterm
   end
 
   private
+
+  # Get a temporary file that will be deleted when the program exits.
+  def temp_file
+    f = Tempfile.new('showterm')
+    f.close(false)
+    at_exit{ f.close(true) }
+    f
+  end
+
+  # Should we try recording using `script`?
+  #
+  # This is a hard question to answer, so we just try it and see whether it
+  # looks like it gives sane results.
+  #
+  # We prefer to use script if it works because ttyrec gives really horrible
+  # errors about missing ptys. This might be fixable by compiling with the
+  # correct flags; but as script seems to work on these platforms, let's just
+  # use that.
+  #
+  # @return [Boolean] whether the script command looks like it's working.
+  def use_script?
+    scriptfile, timingfile = record_with_script('echo', 'foo')
+
+    scriptfile =~ /foo/ && timingfile =~ /^[0-9]/
+  end
+
+  # Record using the modern version of 'script'
+  #
+  # @param [*String] command to run
+  # @return [scriptfile, timingfile]
+  def record_with_script(*cmd)
+    scriptfile, timingfile = [temp_file, temp_file]
+
+    args = ['script']
+    args << '-c' + cmd.join(" ") if cmd.size > 0
+    args << '-q'
+    args << '-t'
+    args << scriptfile.path
+
+    system("#{args.map{ |x| Shellwords.escape(x) }.join(" ")} 2>#{Shellwords.escape(timingfile.path)}")
+
+    [scriptfile.open.read, timingfile.open.read]
+  end
+
+
+  # Record using the bundled version of 'ttyrec'
+  #
+  # @param [*String] command to run
+  # @return [scriptfile, timingfile]
+  def record_with_ttyrec(*cmd)
+    scriptfile = temp_file
+
+    args = [File.join(File.dirname(File.dirname(__FILE__)), 'ext/ttyrec')]
+    if cmd.size > 0
+      args << '-e' + cmd.join(" ")
+    end
+    args << scriptfile.path
+
+    system(*args)
+
+    convert(scriptfile.open.read)
+  end
+
 
   # The original version of showterm used the 'script' binary.
   #
