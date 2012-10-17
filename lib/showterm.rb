@@ -13,12 +13,11 @@ module Showterm
   # @param [*String] cmd
   # @return [scriptfile, timingfile]  the two halves of a termshow
   def record!(*cmd)
-    if use_script?
-      puts 'showterm recording, exit when done'
-      ret = record_with_script(*cmd)
+    puts 'showterm recording. (Exit when done.)'
+    ret = if use_script?
+      record_with_script(*cmd)
     else
-      puts 'showterm recording, exit when done'
-      ret = record_with_ttyrec(*cmd)
+      record_with_ttyrec(*cmd)
     end
     puts 'showterm recording finished, uploading...'
 
