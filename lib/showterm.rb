@@ -13,14 +13,11 @@ module Showterm
   # @param [*String] cmd
   # @return [scriptfile, timingfile]  the two halves of a termshow
   def record!(*cmd)
-    puts 'showterm recording. (Exit when done.)'
     ret = if use_script?
       record_with_script(*cmd)
     else
       record_with_ttyrec(*cmd)
     end
-    puts 'showterm recording finished, uploading...'
-
     ret
   end
 
@@ -45,7 +42,7 @@ module Showterm
 
     response = http(request)
     raise response.body unless Net::HTTPSuccess === response
-    puts response.body
+    response.body
   rescue => e
     raise if retried
     retried = true

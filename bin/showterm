@@ -3,32 +3,81 @@
 require 'readline'
 require File.join(File.dirname(File.dirname(__FILE__)), 'lib/showterm')
 
+if '-e' == ARGV[0]
+  $edit_timings = true
+  ARGV.shift
+end
+
 if ARGV.include?('-h') || ARGV.include?('--help')
   puts <<-EOF
-Usage: showterm <command to run>
+Usage: showterm [-e] <command to run>
 
 showterm will record the exact output of your session, and upload it to the
 internet where it can be replayed by anyone to whom you give the URL.
+
+You can pass `-e` as the first arg and it will allow you to edit the timings
+file before uploading. This can be nice if you want to take long pauses (such
+as searching an answer out) in between commands.
  EOF
  exit
 end
 
-sf, tf = Showterm.record! *ARGV
-begin
-  Showterm.upload! sf, tf
-rescue => e
-  File.open("/tmp/showtime.#$$.script", 'w') do |f|
-    f.write(sf)
+def save which, data
+  path = "/tmp/showtime.#$$.#{which}"
+  File.open(path, 'w') do |f|
+    f.write(data)
   end
+  path
+end
 
-  File.open("/tmp/showtime.#$$.times", 'w') do |f|
-    f.write(sf)
+def leave_trace message, sf, tf
+  script_path = save 'script', sf
+  times_path = save 'times', tf
+  puts message
+  puts %(your work is safe in "#{script_path}" and "#{times_path}")
+  puts "To try uploading manually, use:"
+  puts %(ruby -rshowterm -e'Showterm.upload! File.read("/tmp/showtime.#$$.script"), File.read("/tmp/showtime.#$$.times")')
+end
+
+puts 'showterm recording. (Exit shell when done.)'
+sf, tf = Showterm.record! *ARGV
+puts 'showterm recording finished.'
+
+if $edit_timings
+  editor = ENV.fetch('VISUAL', ENV.fetch('EDITOR', 'vim'))
+  tips = if 'vim' == editor
+    <<-TIPS
+Hot vim tips:
+  Use :cq  from vim to exit nonzero, and cancel the upload
+  Use :%s/^[0-9]\./0./  to get rid of all longish pauses.
+    TIPS
+  else
+    <<-CONSOLATION_TIPS
+If you can make your editor return nonzero, it will cancel the upload.
+    CONSOLATION_TIPS
   end
+  puts <<-TEXT
+
+Recording done, now it's time to dress up those timings!
+#{tips}
+[Hit Enter to edit]
+  TEXT
+  $stdin.readline
+  times_path = save 'times', tf
+  success = system(editor, times_path)
+  if success
+    tf = File.read(times_path)
+  else
+    leave_trace "OK, discarding edits and skipping upload.", sf, tf
+    exit 1
+  end
+end
+
+begin
+  puts "Uploading..."
+  puts Showterm.upload! sf, tf
+rescue => e
   puts [e] + e.backtrace
   puts "-" * 80
-  puts "DON'T PANIC"
-  puts %(your work is safe in "/tmp/showtime.#$$.script" and "/tmp/showtime.#$$.times")
-  puts "To try uploading manually use:"
-
-  puts %(ruby -rshowterm -e'Showterm.upload! File.read("/tmp/showtime.#$$.script"), File.read("/tmp/showtime.#$$.times")')
+  leave_trace "DON'T PANIC", sf, tf
 end
