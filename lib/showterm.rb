@@ -35,6 +35,7 @@ module Showterm
   # @param [String] timingfile  The timings
   # @param [Integer] cols  The width of the terminal
   def upload!(scriptfile, timingfile, cols=terminal_width)
+    retried ||= false
     request = Net::HTTP::Post.new("/scripts")
     request.set_form_data(:scriptfile => scriptfile,
                           :timingfile => timingfile,
