@@ -3,81 +3,130 @@
 require 'readline'
 require File.join(File.dirname(File.dirname(__FILE__)), 'lib/showterm')
 
-if '-e' == ARGV[0]
-  $edit_timings = true
-  ARGV.shift
-end
+class Showterm::Main
 
-if ARGV.include?('-h') || ARGV.include?('--help')
-  puts <<-EOF
-Usage: showterm [-e] <command to run>
+  def run
+    if ARGV.include?('-h') || ARGV.include?('--help')
 
-showterm will record the exact output of your session, and upload it to the
-internet where it can be replayed by anyone to whom you give the URL.
+      help
 
-You can pass `-e` as the first arg and it will allow you to edit the timings
-file before uploading. This can be nice if you want to take long pauses (such
-as searching an answer out) in between commands.
- EOF
- exit
-end
+    elsif ARGV[0] == '--retry'
 
-def save which, data
-  path = "/tmp/showtime.#$$.#{which}"
-  File.open(path, 'w') do |f|
-    f.write(data)
+      ARGV.shift
+      reupload
+
+    else
+
+      if '-e' == ARGV[0] || '--edit' == ARGV[0]
+        @edit_timings = true
+        ARGV.shift
+      end
+
+      sf, tf = record
+      sf, tf = edit(sf, tf) if @edit_timings
+      upload sf, tf
+    end
   end
-  path
-end
 
-def leave_trace message, sf, tf
-  script_path = save 'script', sf
-  times_path = save 'times', tf
-  puts message
-  puts %(your work is safe in "#{script_path}" and "#{times_path}")
-  puts "To try uploading manually, use:"
-  puts %(ruby -rshowterm -e'Showterm.upload! File.read("/tmp/showtime.#$$.script"), File.read("/tmp/showtime.#$$.times")')
-end
-
-puts 'showterm recording. (Exit shell when done.)'
-sf, tf = Showterm.record! *ARGV
-puts 'showterm recording finished.'
-
-if $edit_timings
-  editor = ENV.fetch('VISUAL', ENV.fetch('EDITOR', 'vim'))
-  tips = if 'vim' == editor
-    <<-TIPS
-Hot vim tips:
-  Use :cq  from vim to exit nonzero, and cancel the upload
-  Use :%s/^[0-9]\./0./  to get rid of all longish pauses.
-    TIPS
-  else
-    <<-CONSOLATION_TIPS
-If you can make your editor return nonzero, it will cancel the upload.
-    CONSOLATION_TIPS
+  def record
+    puts 'showterm recording. (Exit shell when done.)'
+    sf, tf = Showterm.record!(*ARGV)
+    puts 'showterm recording finished.'
+    [sf, tf]
   end
-  puts <<-TEXT
 
-Recording done, now it's time to dress up those timings!
-#{tips}
-[Hit Enter to edit]
-  TEXT
-  $stdin.readline
-  times_path = save 'times', tf
-  success = system(editor, times_path)
-  if success
-    tf = File.read(times_path)
-  else
-    leave_trace "OK, discarding edits and skipping upload.", sf, tf
+  def help
+    puts <<-EOF
+      Usage: showterm [-e] <command to run>
+
+      showterm will record the exact output of your session, and upload it to the
+      internet where it can be replayed by anyone to whom you give the URL.
+
+      You can pass `-e` as the first arg and it will allow you to edit the timings
+      file before uploading. This can be nice if you want to take long pauses (such
+      as searching an answer out) in between commands.
+    EOF
+  end
+
+  def reupload
+    if ARGV.size == 2
+      upload(*ARGV.map{ |path| File.read(path) })
+    else
+      puts "Usage: showterm --retry <scriptfile> <timesfile>"
+    end
+  end
+
+  def upload(sf, tf)
+    puts "Uploading..."
+    puts Showterm.upload! sf, tf
+  rescue => e
+    puts [e] + e.backtrace
+    puts "-" * 80
+    die_politely "DON'T PANIC", sf, tf
+  end
+
+  def edit(sf, tf)
+    prepare_to_edit
+
+    times_path = save 'times', tf
+    success = system(editor, times_path)
+    if success
+      tf = File.read(times_path)
+    else
+      die_politely "OK, discarding edits and skipping upload.", sf, tf
+    end
+
+    [sf, tf]
+  end
+
+  def prepare_to_edit
+    puts "Recording done, now it's time to dress up those timings!" +
+         if 'vim' == editor
+           <<-TIPS
+             Hot vim tips:
+
+             Use :cq  from vim to exit nonzero, and cancel the upload
+             Use :%s/^[0-9]\./0./  to get rid of all longish pauses.
+           TIPS
+         else
+           "If you can make your editor return nonzero, it will cancel the upload."
+         end +
+         "[Hit Enter to edit]"
+
+    $stdin.readline
+  end
+
+  def save(which, data)
+    path = "/tmp/showtime.#$$.#{which}"
+    File.open(path, 'w') do |f|
+      f.write(data)
+    end
+    path
+  end
+
+  def die_politely(message, sf, tf)
+    script_path = save 'script', sf
+    times_path = save 'times', tf
+    puts <<-MESSAGE
+      #{message}
+      your work is safe in "#{script_path}" and "#{times_path}"
+      To try uploading manually, use:
+      showterm --retry "#{script_path}" "#{times_path}"
+    MESSAGE
     exit 1
   end
+
+  def dedent(str)
+    str.split("\n").map(&:lstrip).join("\n")
+  end
+
+  def puts(str, *a)
+    super(String === str ? dedent(str) : str, *a)
+  end
+
+  def editor
+    ENV.fetch('VISUAL', ENV.fetch('EDITOR', 'vim'))
+  end
 end
 
-begin
-  puts "Uploading..."
-  puts Showterm.upload! sf, tf
-rescue => e
-  puts [e] + e.backtrace
-  puts "-" * 80
-  leave_trace "DON'T PANIC", sf, tf
-end
+Showterm::Main.new.run
