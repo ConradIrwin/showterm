@@ -162,15 +162,21 @@ module Showterm
   end
 
   def http(request)
-    connection = Net::HTTP.new("showterm.herokuapp.com", 443)
-    connection.use_ssl = true
-    connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    connection = Net::HTTP.new(url.host, url.port)
+    if url.scheme =~ /https/i
+      connection.use_ssl = true
+      connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
     connection.open_timeout = 10
     connection.read_timeout = 10
     connection.start do |http|
       http.request request
     end
   rescue Timeout::Error
-    raise "Could not connect to https://showterm.herokuapp.com/"
+    raise "Could not connect to #{@url.to_s}"
+  end
+
+  def url
+    @url ||= URI(ENV["SHOWTERM_SERVER"] || "https://showterm.herokuapp.com")
   end
 end
