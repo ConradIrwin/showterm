@@ -29,22 +29,32 @@ module Showterm
     guess == 0 ? 80 : guess
   end
 
+
+  # Get the current height of the terminal
+  #
+  # @return [Integer] number of lines
+  def terminal_height
+    guess = `tput lines`.to_i
+    guess == 0 ? 25 : guess
+  end
+
   # Upload the termshow to showterm.io
   #
   # @param [String] scriptfile  The ANSI dump of the terminal
   # @param [String] timingfile  The timings
   # @param [Integer] cols  The width of the terminal
-  def upload!(scriptfile, timingfile, cols=terminal_width)
+  def upload!(scriptfile, timingfile, cols=terminal_width, lines=terminal_height)
     retried ||= false
     request = Net::HTTP::Post.new("/scripts")
     request.set_form_data(:scriptfile => scriptfile,
                           :timingfile => timingfile,
-                          :cols => cols)
+                          :cols => cols,
+                          :lines => lines)
 
     response = http(request)
     raise response.body unless Net::HTTPSuccess === response
     response.body
-  rescue => e
+  rescue
     raise if retried
     retried = true
     retry
