@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'readline'
 require File.join(File.dirname(File.dirname(__FILE__)), 'lib/showterm')
 
 class Showterm::Main
