@@ -44,6 +44,9 @@ class Showterm::Main
       You can pass `-e` as the first arg and it will allow you to edit the timings
       file before uploading. This can be nice if you want to take long pauses (such
       as searching an answer out) in between commands.
+      
+      If you would like to attempt an upload again
+      showterm --retry <script> <times>
     EOF
   end
 
