@@ -23,6 +23,22 @@ TODO
 
 * Allow embedders to chose colourschemes (at least light vs. dark background).
 
+Bugs
+====
+
+Showterm doesn't preserve enough context for `rvm` to work correctly. This can cause some ruby programs (e.g. capistrano) to crash when used inside a showterm. To fix this run: `rvm use` before running any ruby programs:
+
+```
+[~/repo/www] > showterm
+Showterm recording. (Exit shell when done.)
+[~/repo/www] >  rvm use
+Using /Users/jasghar/.rvm/gems/ruby-1.9.3-p286
+[~/repo/www] > cap deploy
+...
+```
+
+
+
 Meta-fu
 =======
 
