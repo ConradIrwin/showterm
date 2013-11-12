@@ -1,6 +1,7 @@
 require 'tempfile'
 require 'shellwords'
 require 'net/https'
+require 'securerandom'
 
 module Showterm
   extend self
@@ -43,24 +44,55 @@ module Showterm
   # @param [String] scriptfile  The ANSI dump of the terminal
   # @param [String] timingfile  The timings
   # @param [Integer] cols  The width of the terminal
-  def upload!(scriptfile, timingfile, cols=terminal_width, lines=terminal_height)
-    retried ||= false
-    request = Net::HTTP::Post.new("/scripts")
-    request.set_form_data(:scriptfile => scriptfile,
-                          :timingfile => timingfile,
-                          :cols => cols,
-                          :lines => lines)
+  # @param [String] secret  The shared secret that will allow deleting this showterm.
+  def upload!(scriptfile, timingfile, cols=terminal_width, lines=terminal_height, secret=shared_secret)
+    with_retry do
+      request = Net::HTTP::Post.new("/scripts")
+      request.set_form_data(:scriptfile => scriptfile,
+                            :timingfile => timingfile,
+                            :cols => cols,
+                            :lines => lines,
+                            :secret => secret)
 
+      response = http(request)
+      raise response.body unless Net::HTTPSuccess === response
+      response.body
+    end
+  end
+
+  # Delete from showterm.io
+  #
+  # @param [String] url  The URL of the showterm to delete
+  # @param [String] secret  The secret with which it was uploaded.
+  def delete!(url, secret=shared_secret)
+
+    request = Net::HTTP::Delete.new(URI(url).path)
+    request.set_form_data(:secret => secret)
     response = http(request)
+
     raise response.body unless Net::HTTPSuccess === response
     response.body
-  rescue
-    raise if retried
-    retried = true
-    retry
   end
 
   private
+
+  def with_retry(n=1, &block)
+    yield
+  rescue
+    raise if n == 0
+    n -= 1
+    retry
+  end
+
+  def shared_secret
+    path = File.expand_path("~/.showterm")
+    unless File.exist?(path)
+      File.open(path, 'w') do |f|
+        f.write SecureRandom.hex(16)
+      end
+    end
+    File.read(path).strip
+  end
 
   # Get a temporary file that will be deleted when the program exits.
   def temp_file

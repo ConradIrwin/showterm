@@ -14,6 +14,11 @@ class Showterm::Main
       ARGV.shift
       reupload
 
+    elsif ARGV[0] == '--delete'
+
+      ARGV.shift
+      delete
+
     else
 
       if '-e' == ARGV[0] || '--edit' == ARGV[0]
@@ -37,6 +42,8 @@ class Showterm::Main
   def help
     puts <<-EOF
       Usage: showterm [-e] <command to run>
+             showterm --retry <script> <times>
+             showterm --delete <url>
 
       showterm will record the exact output of your session, and upload it to the
       internet where it can be replayed by anyone to whom you give the URL.
@@ -47,6 +54,9 @@ class Showterm::Main
 
       If you would like to attempt an upload again
       showterm --retry <script> <times>
+
+      To delete a showterm you have uploaded from this computer
+      showterm --delete <url>
     EOF
   end
 
@@ -56,6 +66,18 @@ class Showterm::Main
     else
       puts "Usage: showterm --retry <scriptfile> <timesfile>"
     end
+  end
+
+  def delete
+    if ARGV.size == 1
+      puts "Deleting..."
+      puts Showterm.delete! ARGV.first
+    else
+      puts "Usage: showterm --delete <url>"
+    end
+  rescue => e
+    puts [e] + e.backtrace
+    puts "-" * 80
   end
 
   def upload(sf, tf)
