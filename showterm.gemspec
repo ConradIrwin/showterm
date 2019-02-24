@@ -9,6 +9,6 @@ Gem::Specification.new do |s|
   s.description = "Integrates with showterm.io for awesome sharability."
   s.files = `git ls-files`.split("\n")
   s.require_path = "lib"
-  s.extensions = "ext/extconf.rb"
   s.executables << 'showterm'
+  s.requirements = 'ttyrec'
 end

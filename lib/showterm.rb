@@ -140,24 +140,34 @@ module Showterm
   end
 
 
-  # Record using the bundled version of 'ttyrec'
+  # Record using system ttyrec
   #
   # @param [*String] command to run
   # @return [scriptfile, timingfile]
   def record_with_ttyrec(*cmd)
     scriptfile = temp_file
 
-    args = [File.join(File.dirname(File.dirname(__FILE__)), 'ext/ttyrec')]
+    args = ['ttyrec']
     if cmd.size > 0
       args << '-e' + cmd.join(" ")
     end
     args << scriptfile.path
 
-    system(*args)
+    status = system(*args)
+    raise TTYREC_NOT_INSTALLED_ERROR if status.nil? && `which ttyrec`.empty?
 
     convert(scriptfile.open.read)
   end
 
+  TTYREC_NOT_INSTALLED_ERROR = <<~HEREDOC
+
+
+      Showterm requires ttyrec to availible in your path.
+      Try installing via: `brew install ttyrec` if you can.
+      Brew patches ttyrec on installation in order to address 
+      a macOS openpty() issue (https://github.com/Homebrew/homebrew-core/pull/21922)
+      Also, definitely check out http://0xcc.net/ttyrec/
+    HEREDOC
 
   # The original version of showterm used the 'script' binary.
   #
