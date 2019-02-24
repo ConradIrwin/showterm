@@ -47,7 +47,7 @@ module Showterm
   # @param [String] secret  The shared secret that will allow deleting this showterm.
   def upload!(scriptfile, timingfile, cols=terminal_width, lines=terminal_height, secret=shared_secret)
     with_retry do
-      request = Net::HTTP::Post.new("/scripts")
+      request = Net::HTTP::Post.new(actual_path "/scripts")
       request.set_form_data(:scriptfile => scriptfile,
                             :timingfile => timingfile,
                             :cols => cols,
@@ -216,6 +216,10 @@ module Showterm
     end
   rescue Timeout::Error
     raise "Could not connect to #{@url.to_s}"
+  end
+
+  def actual_path(path)
+    (url.path || '') + path
   end
 
   def url
